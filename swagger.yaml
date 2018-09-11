@@ -28,6 +28,33 @@ schemes:
 - "https"
 - "http"
 paths:
+  /variant/{variantId}:
+    get:
+      tags:
+      - "variant"
+      summary: "Find variant by ID"
+      description: "Returns a single variant"
+      operationId: "getVariantById"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "variantId"
+        in: "path"
+        description: "ID of variant to return"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Variant"
+        400:
+          description: "Invalid ID supplied"
+        404:
+          description: "Variant not found"
+      security:
+      - api_key: []
   /variant:
     get:
       tags:
@@ -64,19 +91,24 @@ paths:
       tags:
       - "gene"
       summary: ""
-      description: ""
+      description: "Get gene by id but also filter variants out by CADD and freq"
       operationId: ""
       produces:
       - "application/json"
       parameters:
-      - name: "id"
-        in: "query"
+      - in: "query"
+        name: "id"
+        type: string
         description: "Gene ENSEMBL id"
         required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
+      - in : "query"
+        name : "gnomad_freq"
+        type: number
+        description: "gnomad allele freq threshold"
+      - in : "query"
+        name : "cadd"
+        type : number
+        description: "CADD threshold"
       responses:
         200:
           description: "successful operation"
@@ -90,33 +122,7 @@ paths:
       - phenopolis_auth:
         - "write:variants"
         - "read:variants"
-  /variant/{variantId}:
-    get:
-      tags:
-      - "variant"
-      summary: "Find variant by ID"
-      description: "Returns a single variant"
-      operationId: "getVariantById"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "variantId"
-        in: "path"
-        description: "ID of variant to return"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/Variant"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Variant not found"
-      security:
-      - api_key: []
+
   /hpo/:
     get:
       tags:
@@ -164,6 +170,23 @@ securityDefinitions:
     name: "api_key"
     in: "header"
 definitions:
+  SimpleVariant:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      gene:
+        type: "array"
+        items:
+          type: "string"
+      kaviar_af:
+        type: "number"
+      cadd:
+        type: "number"
+      internal_af:
+        type: "number"
+      internal_hom_f:
+        type: "number"
   Variant:
     type: "object"
     properties:
@@ -210,7 +233,7 @@ definitions:
       symbol:
         type: "string"
       variants:
-        $ref: "#/definitions/Variant"
+        $ref: "#/definitions/SimpleVariant"
       HPO:
         $ref: "#/definitions/HPO"
   HPO:
