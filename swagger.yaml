@@ -192,6 +192,10 @@ definitions:
         properties:
           include_null:
               type: boolean
+          an:
+            description: "Some variants on gnomad has very few available alleles. If AN < an, treat its af as null"
+            type: number
+            example: 100
           af:
             type: object
             properties:
@@ -226,9 +230,15 @@ definitions:
         position:
           type: number
         gnomad_af:
+          description: "If it is not covered by gnomad, the value should be null. If it is covered, but not found, the value should be 0"
           type: number
         gnomad_hf:
           type: number
+        gnomad_pop_filter:
+          description: "Populations that have far too many carriers than average. Used in Phenogenon"
+          type: array
+          items:
+            type: string
         filter:
           type: string
         gene:
@@ -308,11 +318,16 @@ definitions:
         type: object
         properties:
           genome:
-            enum: [PASS, AC0, InbreedingCoeff, RF]
+            type: string
           exome:
-            enum: [PASS, AC0, InbreedingCoeff, RF]
+            type: string
       covered:
         type: boolean
+      pop_filter:
+        description: "Populations that have far too many carriers than average. Used in Phenogenon"
+        type: array
+        items:
+          type: string
       ageHet:
         $ref: '#/definitions/AgeHist'
       ageHom:
