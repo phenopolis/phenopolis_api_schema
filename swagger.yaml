@@ -388,17 +388,11 @@ definitions:
         type: object
         properties:
           heterozygous:
-            type: array
-            items:
-              type: string
+            $ref: '#/definitions/PatientBasic'
           homozygous:
-            type: array
-            items:
-              type: string
+            $ref: '#/definitions/PatientBasic'
           missing:
-            type: array
-            items:
-              type: string
+            $ref: '#/definitions/PatientBasic'
       userComment:
         description: "input from users"
         type: object
@@ -440,7 +434,7 @@ definitions:
         items:
           type: string
       variants:
-        $ref: "#/definitions/Variant"
+        $ref: "#/definitions/Variants"
       HPO:
         $ref: "#/definitions/HPO"
   HPO:
@@ -456,15 +450,64 @@ definitions:
         $ref: "#/definitions/Gene"
       prevalence:
         type: number
+  PatientBasic:
+    description: "basic information about a patient, not including variants"
+    type: object
+    properties:
+      id:
+        type: string
+      fullHpos:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+      unrelated: 
+        type: boolean
+      cohort:
+        type: string
   Patient:
     type: object
     properties:
       id:
         type: string
-      phenotypes:
-        $ref: "#/definitions/HPO"
+      unrelated:
+        type: boolean
+      cohort:
+        description: "or contact name"
+        type: string
+        example: "awesome"
+      contact:
+        type: string
+        example: "awesome@fantastic.com"
+      hpos:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+      fullHpos:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
       variants:
-        $ref: "#/definitions/Variants"
+        type: object
+        properties:
+          homozygous:
+            $ref: "#/definitions/Variants"
+          heterozygous:
+            $ref: "#/definitions/Variants"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
