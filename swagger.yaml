@@ -28,6 +28,66 @@ schemes:
 - "https"
 - "http"
 paths:
+  /variants:
+    post:
+      tags: 
+      - "variants"
+      summary: "Finds Variants by patient or gene or chrom:range"
+      operationId: "findVariantsByPatientOrGeneOrRange"
+      produces:
+      - "application/json"
+      parameters:
+        - in: body
+          name: variantFilters
+          description: ""
+          schema:
+            $ref: "#/definitions/VariantFilters"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: object
+            properties:
+              parameters:
+                $ref: '#/definitions/VariantFilters'
+              data:
+                $ref: '#/definitions/Variants'
+        400:
+          description: "Invalid status value"
+      security:
+      - phenopolis_auth:
+        - "write:variants"
+        - "read:variants"
+  /gene:
+    get:
+      tags:
+      - "gene"
+      summary: ""
+      description: ""
+      operationId: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: id
+        in: query
+        description: "Gene ENSEMBL id"
+        required: true
+        type: array
+        items:
+          type: string
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Gene"
+        400:
+          description: "Invalid tag value"
+      security:
+      - phenopolis_auth:
+        - "write:variants"
+        - "read:variants"
   /variant/{variantId}:
     get:
       tags:
@@ -55,74 +115,6 @@ paths:
           description: "Variant not found"
       security:
       - api_key: []
-  /variant:
-    get:
-      tags:
-      - "variant"
-      summary: "Finds Variants by id"
-      description: "Multiple variant ids can be provided with comma separated strings"
-      operationId: "findVariantsByID"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "id"
-        in: "query"
-        description: ""
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Variant"
-        400:
-          description: "Invalid status value"
-      security:
-      - phenopolis_auth:
-        - "write:variants"
-        - "read:variants"
-  /gene:
-    get:
-      tags:
-      - "gene"
-      summary: ""
-      description: "Get gene by id but also filter variants out by CADD and freq"
-      operationId: ""
-      produces:
-      - "application/json"
-      parameters:
-      - in: "query"
-        name: "id"
-        type: string
-        description: "Gene ENSEMBL id"
-        required: true
-      - in : "query"
-        name : "gnomad_freq"
-        type: number
-        description: "gnomad allele freq threshold"
-      - in : "query"
-        name : "cadd"
-        type : number
-        description: "CADD threshold"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Gene"
-        400:
-          description: "Invalid tag value"
-      security:
-      - phenopolis_auth:
-        - "write:variants"
-        - "read:variants"
-
   /hpo/:
     get:
       tags:
@@ -170,92 +162,309 @@ securityDefinitions:
     name: "api_key"
     in: "header"
 definitions:
-  SimpleVariant:
-    type: "object"
+  VariantFilters:
+    description: "common filters used to filter variants"
+    type: object
     properties:
-      id:
-        type: "string"
+      chromosome:
+        description: "if queried from e.g. gene or range"
+        type: string
+      start:
+        type: integer
+      stop:
+        type: integer
       gene:
-        type: "array"
+        type: string
+      genotypes:
+        description: "This is where you query a patient's variants. Note that you can also do simple arbitrary segregations here"
+        type: array
         items:
-          type: "string"
-      kaviar_af:
-        type: "number"
+          type: object
+          properties:
+            gt:
+              description: wt stands for wildtype
+              enum: [het, hom, wt, wtOrMiss]
+            patient:
+              type: string
+      gnomad:
+        type: object
+        description: "cutoffs applied on gnomad frequencies. can include variants that are not covered"
+        properties:
+          include_null:
+              type: boolean
+          af:
+            type: object
+            properties:
+              min:
+                type: number
+              max:
+                type: number
+          hf:
+            type: object
+            properties:
+              min:
+                type: number
+              max:
+                type: number
       cadd:
-        type: "number"
-      internal_af:
-        type: "number"
-      internal_hom_f:
-        type: "number"
+        type: object
+        properties:
+          min:
+            type: number
+          max:
+            type: number
+  Variants:
+    description: "collection of variants, but with less detail"
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        chromosome:
+          type: string
+        position:
+          type: number
+        gnomad_af:
+          type: number
+        gnomad_hf:
+          type: number
+        filter:
+          type: string
+        gene:
+          type: array
+          items:
+            type: string
+        codingOrSplicing:
+          type: boolean
+        impact:
+          type: string
+        consequence:
+          type: string
+        cadd:
+          type: number
+        numberOfHetsCarriers:
+          type: number
+        numberOfHomsCarriers:
+          type: number
+        hgvs:
+          example: "such as ENST12345:c.100A>C:p.34M>P"
+          type: string
+  GnomadBase:
+    type: object
+    properties:
+      hc:
+        description: "homozygote count"
+        type: integer
+      hf:
+        description: "estimated homozygote frequency"
+        type: number
+      ac:
+        description: "alternative allele count"
+        type: integer
+      an:
+        description: "total allele count"
+        type: integer
+      af:
+        description: "alternative allele frequency"
+        type: number
+      
+  AgeHist:
+    description: "gnomad release 2.1 introduces age histogram"
+    type: object
+    properties:
+      30:
+        type: integer
+      35:
+        type: integer
+      40:
+        type: integer
+      45:
+        type: integer
+      50:
+        type: integer
+      55:
+        type: integer
+      60:
+        type: integer
+      65:
+        type: integer
+      70:
+        type: integer
+      75:
+        type: integer
+      80:
+        type: integer
+      "<30":
+        type: integer
+      ">80":
+        type: integer
+      
+  Gnomad:
+    type: object
+    description: "gnomad release 2.1 returns much richer details such as age distribution of the carriers."
+    properties:
+      filters:
+        type: object
+        properties:
+          genome:
+            enum: [PASS, AC0, InbreedingCoeff, RF]
+          exome:
+            enum: [PASS, AC0, InbreedingCoeff, RF]
+      covered:
+        type: boolean
+      ageHet:
+        $ref: '#/definitions/AgeHist'
+      ageHom:
+        $ref: '#/definitions/AgeHist'
+      afr:
+        $ref: "#/definitions/GnomadBase"
+      amr:
+        $ref: "#/definitions/GnomadBase"
+      asj:
+        $ref: "#/definitions/GnomadBase"
+      eas:
+        $ref: "#/definitions/GnomadBase"
+      fin:
+        $ref: "#/definitions/GnomadBase"
+      nfe:
+        $ref: "#/definitions/GnomadBase"
+      sas:
+        $ref: "#/definitions/GnomadBase"
+      oth:
+        $ref: "#/definitions/GnomadBase"
+      male:
+        $ref: "#/definitions/GnomadBase"
+      female:
+        $ref: "#/definitions/GnomadBase"
+      overall:
+        $ref: "#/definitions/GnomadBase"
   Variant:
-    type: "object"
+    type: object
     properties:
       id:
-        type: "string"
+        type: string
+      chromosome:
+        type: string
+      position:
+        type: number
+      rsid:
+        type: string
       gene:
-        type: "array"
+        type: array
         items:
-          type: "string"
-      gnomad_af:
-        type: "number"
-      gnomad_hom_f:
-        type: "number"
+          type: string
+      gnomad:
+          $ref: "#/definitions/Gnomad"
       bravo_af:
-        type: "number"
+        type: number
+        description: "You need to obtain license from https://bravo.sph.umich.edu/ in order to use Bravo"
       bravo_hom_f:
-        type: "number"
+        type: number
+        description: "You need to obtain license from https://bravo.sph.umich.edu/ in order to use Bravo"
       kaviar_af:
-        type: "number"
+        type: number
       filter:
-        type: "string"
+        type: string
       cadd:
-        type: "number"
+        type: number
       internal_af:
-        type: "number"
+        type: number
       internal_hom_f:
-        type: "number"
+        type: number
+      feature_id:
+        type: string
+      feature_type:
+        type: string
+      hgvs_c:
+        type: string
+      hgvs_p:
+        type: string
+      consequence:
+        type: string
+      impact:
+        type: string
       carriers:
-        type: "object"
+        type: object
         properties:
           heterozygous:
-            type: "array"
+            type: array
             items:
-              type: "string"
+              type: string
           homozygous:
-            type: "array"
+            type: array
             items:
-              type: "string"
+              type: string
+          missing:
+            type: array
+            items:
+              type: string
+      userComment:
+        description: "input from users"
+        type: object
+        properties:
+          clinicalRating:
+            description: "averaged ratings from 1 to 5 from users. 1 for definitely benign, and 5 for definitely pathogenic"
+            type: number
+          falsePositiveCounts:
+            description: "Counts of users flagging this variant as non-existence"
+            type: integer
+          comments:
+            description: "All the comments about this variant submitted by users"
+            type: array
+            items:
+              type: object
+              properties:
+                text:
+                  type: string
+                userId:
+                  type: string
+                contact:
+                  type: string
+                  example: hahaha@hohoho.com
   Gene:
-    type: "object"
+    type: object
     properties:
       id:
-        type: "string"
+        type: string
       symbol:
-        type: "string"
+        type: string
+      pLI:
+        description: "can be obtained from gnomAD gene constraint table"
+        type: number
+      pRes:
+        description: "can be obtained from gnomAD gene constraint table"
+        type: number
+      OMIM:
+        type: array
+        items:
+          type: string
       variants:
-        $ref: "#/definitions/SimpleVariant"
+        $ref: "#/definitions/Variant"
       HPO:
         $ref: "#/definitions/HPO"
   HPO:
-    type: "object"
+    type: object
     properties:
       id:
-        type: "string"
+        type: string
       name:
-        type: "string"
+        type: string
       patients:
         $ref: "#/definitions/Patient"
       genes:
         $ref: "#/definitions/Gene"
+      prevalence:
+        type: number
   Patient:
-    type: "object"
+    type: object
     properties:
       id:
-        type: "string"
+        type: string
       phenotypes:
         $ref: "#/definitions/HPO"
       variants:
-        $ref: "#/definitions/Variant"
+        $ref: "#/definitions/Variants"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
