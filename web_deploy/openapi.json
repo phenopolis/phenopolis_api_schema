@@ -1,0 +1,799 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "",
+    "version": "1.0.0",
+    "title": "Phenopolis API",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "email": "info@phenopolis.org"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "host": "www.phenopolis.org",
+  "basePath": "/v1",
+  "tags": [
+    {
+      "name": "variant",
+      "description": "Variant information",
+      "externalDocs": {
+        "description": "",
+        "url": "http://www.phenopolis.org"
+      }
+    },
+    {
+      "name": "gene",
+      "description": "Gene information"
+    },
+    {
+      "name": "phenotype",
+      "description": "Phenotype information",
+      "externalDocs": {
+        "description": "",
+        "url": "http://www.phenopolis.org"
+      }
+    }
+  ],
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "paths": {
+    "/variants": {
+      "post": {
+        "tags": [
+          "variants"
+        ],
+        "summary": "Finds Variants by patient or gene or chrom:range",
+        "operationId": "findVariantsByPatientOrGeneOrRange",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "variantFilters",
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/VariantFilters"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "parameters": {
+                  "$ref": "#/definitions/VariantFilters"
+                },
+                "data": {
+                  "$ref": "#/definitions/Variants"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value"
+          }
+        },
+        "security": [
+          {
+            "phenopolis_auth": [
+              "write:variants",
+              "read:variants"
+            ]
+          }
+        ]
+      }
+    },
+    "/gene": {
+      "get": {
+        "tags": [
+          "gene"
+        ],
+        "summary": "",
+        "description": "",
+        "operationId": "",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Gene ENSEMBL id",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Gene"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid tag value"
+          }
+        },
+        "security": [
+          {
+            "phenopolis_auth": [
+              "write:variants",
+              "read:variants"
+            ]
+          }
+        ]
+      }
+    },
+    "/variant/{variantId}": {
+      "get": {
+        "tags": [
+          "variant"
+        ],
+        "summary": "Find variant by ID",
+        "description": "Returns a single variant",
+        "operationId": "getVariantById",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "variantId",
+            "in": "path",
+            "description": "ID of variant to return",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Variant"
+            }
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },
+          "404": {
+            "description": "Variant not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/hpo/": {
+      "get": {
+        "tags": [
+          "phenotype"
+        ],
+        "summary": "Returns Human Phenotype Ontology (HPO)",
+        "description": "",
+        "operationId": "",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/HPO"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/patient": {
+      "get": {
+        "tags": [
+          "patient"
+        ],
+        "summary": "Returns patient",
+        "description": "",
+        "operationId": "",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Patient"
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "phenopolis_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "https://www.phenopolis.org/oauth/dialog",
+      "flow": "implicit",
+      "scopes": {
+        "write:variants": "modify variants in your account",
+        "read:variants": "read your variants"
+      }
+    },
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    }
+  },
+  "definitions": {
+    "VariantFilters": {
+      "description": "common filters used to filter variants",
+      "type": "object",
+      "properties": {
+        "chromosome": {
+          "description": "if queried from e.g. gene or range",
+          "type": "string"
+        },
+        "start": {
+          "type": "integer"
+        },
+        "stop": {
+          "type": "integer"
+        },
+        "gene": {
+          "type": "string"
+        },
+        "genotypes": {
+          "description": "This is where you query a patient's variants. Note that you can also do simple arbitrary segregations here",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "gt": {
+                "description": "wt stands for wildtype",
+                "enum": [
+                  "het",
+                  "hom",
+                  "wt",
+                  "wtOrMiss"
+                ]
+              },
+              "patient": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "gnomad": {
+          "type": "object",
+          "description": "cutoffs applied on gnomad frequencies. can include variants that are not covered",
+          "properties": {
+            "include_null": {
+              "type": "boolean"
+            },
+            "an": {
+              "description": "Some variants on gnomad has very few available alleles. If AN < an, treat its af as null",
+              "type": "number",
+              "example": 100
+            },
+            "af": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              }
+            },
+            "hf": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "cadd": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "Variants": {
+      "description": "collection of variants, but with less detail",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "chromosome": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "gnomad_af": {
+            "description": "If it is not covered by gnomad, the value should be null. If it is covered, but not found, the value should be 0",
+            "type": "number"
+          },
+          "gnomad_hf": {
+            "type": "number"
+          },
+          "gnomad_pop_filter": {
+            "description": "Populations that have far too many carriers than average. Used in Phenogenon",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filter": {
+            "type": "string"
+          },
+          "gene": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "codingOrSplicing": {
+            "type": "boolean"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "consequence": {
+            "type": "string"
+          },
+          "cadd": {
+            "type": "number"
+          },
+          "numberOfHetsCarriers": {
+            "type": "number"
+          },
+          "numberOfHomsCarriers": {
+            "type": "number"
+          },
+          "hgvs": {
+            "example": "such as ENST12345:c.100A>C:p.34M>P",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GnomadBase": {
+      "type": "object",
+      "properties": {
+        "hc": {
+          "description": "homozygote count",
+          "type": "integer"
+        },
+        "hf": {
+          "description": "estimated homozygote frequency",
+          "type": "number"
+        },
+        "ac": {
+          "description": "alternative allele count",
+          "type": "integer"
+        },
+        "an": {
+          "description": "total allele count",
+          "type": "integer"
+        },
+        "af": {
+          "description": "alternative allele frequency",
+          "type": "number"
+        }
+      }
+    },
+    "AgeHist": {
+      "description": "gnomad release 2.1 introduces age histogram",
+      "type": "object",
+      "properties": {
+        "30": {
+          "type": "integer"
+        },
+        "35": {
+          "type": "integer"
+        },
+        "40": {
+          "type": "integer"
+        },
+        "45": {
+          "type": "integer"
+        },
+        "50": {
+          "type": "integer"
+        },
+        "55": {
+          "type": "integer"
+        },
+        "60": {
+          "type": "integer"
+        },
+        "65": {
+          "type": "integer"
+        },
+        "70": {
+          "type": "integer"
+        },
+        "75": {
+          "type": "integer"
+        },
+        "80": {
+          "type": "integer"
+        },
+        "<30": {
+          "type": "integer"
+        },
+        ">80": {
+          "type": "integer"
+        }
+      }
+    },
+    "Gnomad": {
+      "type": "object",
+      "description": "gnomad release 2.1 returns much richer details such as age distribution of the carriers.",
+      "properties": {
+        "filters": {
+          "type": "object",
+          "properties": {
+            "genome": {
+              "type": "string"
+            },
+            "exome": {
+              "type": "string"
+            }
+          }
+        },
+        "covered": {
+          "type": "boolean"
+        },
+        "pop_filter": {
+          "description": "Populations that have far too many carriers than average. Used in Phenogenon",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ageHet": {
+          "$ref": "#/definitions/AgeHist"
+        },
+        "ageHom": {
+          "$ref": "#/definitions/AgeHist"
+        },
+        "afr": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "amr": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "asj": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "eas": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "fin": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "nfe": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "sas": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "oth": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "male": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "female": {
+          "$ref": "#/definitions/GnomadBase"
+        },
+        "overall": {
+          "$ref": "#/definitions/GnomadBase"
+        }
+      }
+    },
+    "Variant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "chromosome": {
+          "type": "string"
+        },
+        "position": {
+          "type": "number"
+        },
+        "rsid": {
+          "type": "string"
+        },
+        "gene": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gnomad": {
+          "$ref": "#/definitions/Gnomad"
+        },
+        "bravo_af": {
+          "type": "number",
+          "description": "You need to obtain license from https://bravo.sph.umich.edu/ in order to use Bravo"
+        },
+        "bravo_hom_f": {
+          "type": "number",
+          "description": "You need to obtain license from https://bravo.sph.umich.edu/ in order to use Bravo"
+        },
+        "kaviar_af": {
+          "type": "number"
+        },
+        "filter": {
+          "type": "string"
+        },
+        "cadd": {
+          "type": "number"
+        },
+        "internal_af": {
+          "type": "number"
+        },
+        "internal_hom_f": {
+          "type": "number"
+        },
+        "feature_id": {
+          "type": "string"
+        },
+        "feature_type": {
+          "type": "string"
+        },
+        "hgvs_c": {
+          "type": "string"
+        },
+        "hgvs_p": {
+          "type": "string"
+        },
+        "consequence": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string"
+        },
+        "carriers": {
+          "type": "object",
+          "properties": {
+            "heterozygous": {
+              "$ref": "#/definitions/PatientBasic"
+            },
+            "homozygous": {
+              "$ref": "#/definitions/PatientBasic"
+            },
+            "missing": {
+              "$ref": "#/definitions/PatientBasic"
+            }
+          }
+        },
+        "userComment": {
+          "description": "input from users",
+          "type": "object",
+          "properties": {
+            "clinicalRating": {
+              "description": "averaged ratings from 1 to 5 from users. 1 for definitely benign, and 5 for definitely pathogenic",
+              "type": "number"
+            },
+            "falsePositiveCounts": {
+              "description": "Counts of users flagging this variant as non-existence",
+              "type": "integer"
+            },
+            "comments": {
+              "description": "All the comments about this variant submitted by users",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "contact": {
+                    "type": "string",
+                    "example": "hahaha@hohoho.com"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Gene": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "pLI": {
+          "description": "can be obtained from gnomAD gene constraint table",
+          "type": "number"
+        },
+        "pRes": {
+          "description": "can be obtained from gnomAD gene constraint table",
+          "type": "number"
+        },
+        "OMIM": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "variants": {
+          "$ref": "#/definitions/Variants"
+        },
+        "HPO": {
+          "$ref": "#/definitions/HPO"
+        }
+      }
+    },
+    "HPO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "patients": {
+          "$ref": "#/definitions/Patient"
+        },
+        "genes": {
+          "$ref": "#/definitions/Gene"
+        },
+        "prevalence": {
+          "type": "number"
+        }
+      }
+    },
+    "PatientBasic": {
+      "description": "basic information about a patient, not including variants",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "fullHpos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "unrelated": {
+          "type": "boolean"
+        },
+        "cohort": {
+          "type": "string"
+        }
+      }
+    },
+    "Patient": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "unrelated": {
+          "type": "boolean"
+        },
+        "cohort": {
+          "description": "or contact name",
+          "type": "string",
+          "example": "awesome"
+        },
+        "contact": {
+          "type": "string",
+          "example": "awesome@fantastic.com"
+        },
+        "hpos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "fullHpos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "variants": {
+          "type": "object",
+          "properties": {
+            "homozygous": {
+              "$ref": "#/definitions/Variants"
+            },
+            "heterozygous": {
+              "$ref": "#/definitions/Variants"
+            }
+          }
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about Swagger",
+    "url": "http://swagger.io"
+  }
+}
